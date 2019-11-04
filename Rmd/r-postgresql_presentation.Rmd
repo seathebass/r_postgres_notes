@@ -1,0 +1,371 @@
+---
+title: "R and PostgreSQL"
+author: "Sebastian Hoyos-Torres"
+institute: "CUNY Graduate Center and Caret Lab"
+date: "`r Sys.Date()`"
+output:
+  xaringan::moon_reader:
+    lib_dir: libs
+    css: xaringan-themer.css
+    nature:
+      highlightStyle: github
+      highlightLines: true
+      countIncrementalSlides: false
+      ratio: 16:9
+editor_options: 
+  chunk_output_type: console
+---
+<style>
+
+.center2 {
+position: absolute;
+top: 45%;
+left: 25%;
+right: 50%; 
+width: 50%;
+}
+
+</style>
+```{r setup, include=FALSE}
+options(htmltools.dir.version = FALSE)
+xaringanthemer::mono_dark()
+```
+
+--- 
+# Welcome
+
+- Reasons you may be interested in this presentation:
+
+--
+  - You like R
+  - You are curious about postgreSQL
+  - You might want to use both and are interested in best practices to integrate them
+
+--
+- Reasons to stay if these aren't appealing
+
+--
+.center2[
+![](https://media.giphy.com/media/THrYOidLs0z9WCOvGi/giphy.gif)
+]
+---
+# Why can't we do everything in R?
+
+--
+- R is great and I'm actually a massive fan if you don't already know.
+
+--
+
+- "Big Data" might overwhelm R though even after using all different tools
+
+--
+
+> "If your data is bigger than this, carefully consider if your big data problem might actually be a small data problem in disguise. While the complete data might be big, often the data needed to answer a specific question is small. You might be able to find a subset, subsample, or summary that fits in memory and still allows you to answer the question that you’re interested in. The challenge here is finding the right small data, which often requires a lot of iteration." (Grolemund and Wickham, 2019)
+
+---
+# So what should we do to handle big data
+- First, need to determine if our problem can't be handled as a multiple small data problem. 
+
+- If not, we might want to move into discussing relational databases and postgresql
+
+---
+# PostgreSQL?
+
+--
+> PostgreSQL is a powerful, open source object-relational database system that uses and extends the SQL language combined with many features that safely store and scale the most complicated data workload (https://www.postgresql.org/about/)
+
+--
+
+- With Postgres, we can solve a lot of problems arising from larger datasets.
+
+
+---
+# Our Task:
+- To use PostgreSQL, let's look at the NYC Yellow Taxi data
+
+--
+   - Specifically, we will be looking at the 2018 Yellow Taxi data 
+    - Has about 112 million rows so will kill most R sessions
+
+---
+# To start: creating the database
+- We need to create a relational database to start. Thus, we will need to use postgres.
+```{r,echo=F}
+library(DBI)
+con <- dbConnect(RPostgres::Postgres(),"nyc_yellow_taxi")
+```
+
+```{sql connection=con,eval = F}
+createdb nyc_yellow_taxi
+psql nyc_yellow_taxi
+```
+---
+# Creating the table 
+```{sql connection=con,eval = F}
+CREATE TABLE nyc_yellow_2018(
+    VendorID varchar(100),
+    tpep_pickup_datetime date,
+    tpep_dropoff_datetime date,
+    passenger_count integer,
+    trip_distance float(8),
+    RatecodeID varchar(100),
+    store_and_fwd_flag varchar(100),
+    PULocationID varchar(100),
+    DOLocationID varchar(100),
+    payment_type varchar(10),
+    fare_amount float(8),
+    extra float(8),
+    mta_tax float(8),
+    tip_amount float(8),
+    tolls_amount float(8),
+    improvement_surcharge float(8),
+    total_amount float(8)
+);
+COPY nyc_yellow_2018
+FROM '/home/seabass/2018_Yellow_Taxi_Trip_Data.csv' CSV HEADER;
+GRANT ALL PRIVILEGES ON nyc_yellow_2018 TO seabass;
+```
+
+--- 
+# Integrating R and PostgreSQL
+- Now that we have the database and table set up, we can access it through R using DBI
+```{r dbiconnect}
+library(DBI)
+con <- dbConnect(RPostgres::Postgres(),dbname = "nyc_yellow_taxi") #connect to the database
+dbListTables(con)
+```
+- The above command should show that there is one table called nyc_yellow_2018 available.
+
+---
+# Reading the data
+- Using either DBI or dplyr, we can bring the tables to manipulate in R as follows:
+```{r import,message=F,warning=F}
+library(tidyverse)
+nyc_yellow_2018 <- tbl(con,"nyc_yellow_2018")
+nyc_yellow_2018
+```
+
+---
+# Wielding the power of the tidyverse
+- One of the great benefits of using the tidyverse is that most of dplyr operates with a SQL backend
+- In other words, rather than having to learn SQL like an expert (you should build up familiarity with SQL), you can use many dplyr verbs. for example:
+```{r}
+nyc_yellow_2018 %>% 
+  select(fare_amount)
+```
+
+---
+# Lazy Queries and lazy evaluation?
+- I mentioned that dplyr and dblyr translate R into sql so any guesses into what lazy evaluation would look like?
+
+--
+
+  - It indicates that R doesn't bring the data until it is asked to. 
+  - Dplyr doesn't do any work until the last possible moment by sending everything to the database
+
+--
+
+- So let's look at the underlying SQL query
+```{r}
+nyc_yellow_2018 %>% 
+  select(fare_amount) %>% 
+  show_query()
+```
+
+- The underlying SQL is what is ultimately sent to our database which queries the table.
+
+---
+# What we can't do
+- Note, the data that we have pulled in isn't really an R dataframe. See the following.
+
+```{r}
+str(nyc_yellow_2018)
+```
+
+- Thus, we can't use some regular R functions. For example try using brackets
+
+---
+# Exercise:
+- Given that we've successfully managed to "read" the data into R, how would we go about finding the following?
+
+ - find the mean, median, maximum, minimum and standard deviation in fare_amount column.
+ - find the number of missing observations in the fare_amount column.
+ - find the counts of the payment_type column and their respective proportions.
+
+---
+--- 
+# Solutions
+
+- To find the descriptives, we're going to have to use summarize from dplyr
+```{r descriptives,cache=TRUE}
+nyc_yellow_2018 %>% 
+  summarise(fare_amount_mean = mean(fare_amount,na.rm = T),
+            fare_amount_median = median(fare_amount),
+            fare_amount_sd = sd(fare_amount,na.rm = T),
+            fare_amount_max = max(fare_amount,na.rm = T),
+            fare_amount_min = min(fare_amount,na.rm = T))
+```
+
+- Never underestimate the power of descriptive statistics as shown above. We would miss some things if we didn't run this
+
+---
+# Solutions continued
+
+```{r}
+nyc_yellow_2018 %>% 
+  summarise(missing_fare_amount = is.na(fare_amount)) %>% 
+  count(missing_fare_amount)
+```
+- From the above, we can see that there are no missing values in fare_amount (kind of)
+
+```{r}
+nyc_yellow_2018 %>% 
+  count(payment_type) %>% 
+  mutate(prop = round(n/sum(n),2))
+```
+- This is pretty immensely helpful. If only we knew what those payment_types were...
+
+---
+# Visualizations a la grande data
+
+- I like visualizing stuff and would be very, very sad if big data would kill my ability to visualize with tools like ggplot.
+  - So does it?
+
+--
+.center2[
+![](http://giphygifs.s3.amazonaws.com/media/TPl5N4Ci49ZQY/giphy.gif)
+]
+
+---
+# Let's make some plots!
+- Thankfully, there is a way to build plots using DBplot!
+
+```{r visualization,cache=TRUE}
+library(dbplot)
+nyc_yellow_2018 %>% 
+  db_compute_bins(fare_amount) %>% 
+  mutate(count = as.numeric(count)) %>% # done to coerce int64 to something ggplot can understand
+  ggplot()+
+  geom_col(aes(fare_amount,count))+
+  theme_minimal()+
+  labs(title = "fare amount for nyc yellow taxi 2018",
+       x = "fare amount")
+```
+
+- Almost all types of plots are available using dbplot. The end result will always be a ggplot object that you can modify using regular ggplot.
+
+---
+# Intermediate data wrangling
+
+- We've noticed that there are some problems with the data in fare amount (chiefly, there seems to be a massive outlier and a large negative number).
+
+- Let's look at the values where the fare values are negative.
+```{r under_zero}
+under_zero <- nyc_yellow_2018 %>% 
+  filter(fare_amount < 0) %>% 
+  summarise(count = n()) %>% 
+  collect
+```
+
+- from the above, we observe `r scales::comma(as.numeric(under_zero$count))` cases have a value underneath 0 for fare_amount
+
+```{r which_zero}
+nyc_yellow_2018 %>% 
+  filter(fare_amount < 0 ) %>% 
+  distinct(fare_amount) %>% 
+  arrange(fare_amount)
+```
+
+---
+# What should we do? 
+- There are two options for dealing with data that should be non-negative
+  - replace with zero
+  - replace with NA
+- If we want to do the first, we can manipulate the data as follows
+
+```{r}
+nyc_yellow_2018 %>% 
+  mutate(fare_amount = if_else(fare_amount < 0,0,fare_amount)) 
+```
+
+---
+# Some intermediate dplyr tricks
+- let's say we wanted to find the mean for passenger count and trip distance at the same time. How would we go about doing that?
+  - First thought would be to use summarize
+
+```{r example, warning=FALSE}
+nyc_yellow_2018 %>% 
+  summarise(trip_distance_mean = mean(trip_distance))
+nyc_yellow_2018 %>% 
+  summarise(passenger_count_mean = mean(passenger_count))
+```
+
+--
+
+- This approach is feasible for two columns but if there were more we might have a problem
+
+---
+# Scoped dplyr verbs in postgres
+
+- We can use scoped dplyr verbs to greatly speed things up. In the past example, we could use summarize_at as follows
+
+```{r}
+nyc_yellow_2018 %>% 
+  summarise_at(vars(c("passenger_count","trip_distance")),mean)
+```
+
+- While the advantages of this aren't immediately apparent, we can start seeing it if I were to ask you to find the mean of every numeric column in the data
+
+---
+# More scoping
+- Scoped verbs are valuable features and can speed a lot of processes up. Here's a good example
+
+```{r}
+nyc_yellow_2018 %>% 
+  summarise_if(is.numeric,mean)
+
+```
+
+- We've reduced what would have been a large chunk of code to about 2 lines (kind of).
+
+---
+# Using SQL if needed
+- There may be times when we need to bring out the SQL
+- For example, if we wanted to get the counts of null in passenger count, we could do the following
+
+```{r}
+dbSendQuery(con,'SELECT count(*) FROM nyc_yellow_2018')
+```
+---
+# Counting missing values in all columns in one go
+- I've delayed this enough, how can we get the missing info in one go?
+
+```{r}
+nyc_yellow_2018 %>% 
+  summarise_all(is.na) %>% 
+  mutate_all(~if_else(. == TRUE,1,0)) %>% 
+  summarise_all(sum)
+```
+
+- The power of scoping right here.
+
+---
+# Modelling!
+- We can do some pretty rough modelling. Let's try a linear regression!
+
+```{r model}
+library(modeldb)
+nyc_yellow_2018 %>% 
+  select(trip_distance,passenger_count,fare_amount) %>% 
+  linear_regression_db(y_var = fare_amount,sample_size = 10000000)
+```
+
+- Whether these results make sense or not are the subject of more investigation
+
+---
+# More advanced modelling
+- We can use more advanced modelling using tidypredict, parsnip, and other packages from the tidymodels ecosystem. 
+
+- A good tutorial would be (here)[https://resources.rstudio.com/webinars/modeling-in-databases-with-r]
+
+- I can cover more if time allows.

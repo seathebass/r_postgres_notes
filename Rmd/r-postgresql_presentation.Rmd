@@ -320,10 +320,9 @@ nyc_yellow_2018 %>%
 # More scoping
 - Scoped verbs are valuable features and can speed a lot of processes up. Here's a good example
 
-```{r}
+```{r,warning=FALSE}
 nyc_yellow_2018 %>% 
   summarise_if(is.numeric,mean)
-
 ```
 
 - We've reduced what would have been a large chunk of code to about 2 lines (kind of).
@@ -331,11 +330,12 @@ nyc_yellow_2018 %>%
 ---
 # Using SQL if needed
 - There may be times when we need to bring out the SQL
-- For example, if we wanted to get the counts of null in passenger count, we could do the following
+- For example, if we wanted to get the number of times each payment type was used as we did previously, we could do the following
 
 ```{r}
-dbSendQuery(con,'SELECT count(*) FROM nyc_yellow_2018')
+dbGetQuery(con,'SELECT COUNT(*) FROM nyc_yellow_2018 GROUP BY payment_type')
 ```
+
 ---
 # Counting missing values in all columns in one go
 - I've delayed this enough, how can we get the missing info in one go?
@@ -366,6 +366,28 @@ nyc_yellow_2018 %>%
 # More advanced modelling
 - We can use more advanced modelling using tidypredict, parsnip, and other packages from the tidymodels ecosystem. 
 
-- A good tutorial would be (here)[https://resources.rstudio.com/webinars/modeling-in-databases-with-r]
+- We'd first need to sample into memory though
 
-- I can cover more if time allows.
+```{r,warning=F,message = F}
+library(tidymodels)
+yellow_sample <- dbGetQuery(con,'SELECT "fare_amount", "vendorid", "tip_amount","trip_distance","tolls_amount" FROM nyc_yellow_2018 ORDER BY RANDOM() LIMIT 10000') %>% 
+  as_tibble()
+
+lin_reg <- linear_reg()
+rand_model <- lin_reg %>% 
+  set_engine("lm") %>% 
+  fit(tip_amount ~ . ,data = yellow_sample)
+yellow_sample %>% 
+  bind_cols(predict(rand_model,yellow_sample)) %>% 
+  metrics(truth = tip_amount,estimate = .pred)
+```
+
+--- 
+# Testing our model on the database
+- We can evaluate our model's predictions as follows
+```{r}
+nyc_yellow_2018 %>% 
+  tidypredict::tidypredict_to_column(rand_model) %>% 
+  select(tip_amount,fit)
+```
+

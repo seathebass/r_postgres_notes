@@ -4,7 +4,7 @@
     <title>R and PostgreSQL</title>
     <meta charset="utf-8" />
     <meta name="author" content="Sebastian Hoyos-Torres" />
-    <meta name="date" content="2019-11-04" />
+    <meta name="date" content="2019-11-05" />
     <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
   </head>
   <body>
@@ -14,7 +14,7 @@ class: center, middle, inverse, title-slide
 # R and PostgreSQL
 ### Sebastian Hoyos-Torres
 ### CUNY Graduate Center and Caret Lab
-### 2019-11-04
+### 2019-11-05
 
 ---
 
@@ -155,16 +155,16 @@ nyc_yellow_2018
 ## # Database: postgres [seabass@/var/run/postgresql:5432/nyc_yellow_taxi]
 ##    vendorid tpep_pickup_dat… tpep_dropoff_da… passenger_count trip_distance
 ##    &lt;chr&gt;    &lt;date&gt;           &lt;date&gt;                     &lt;int&gt;         &lt;dbl&gt;
-##  1 1        2018-11-16       2018-11-16                     2          1   
-##  2 1        2018-11-16       2018-11-16                     2          1.1 
-##  3 1        2018-11-16       2018-11-16                     1          0.9 
-##  4 2        2018-11-16       2018-11-16                     1          1.51
-##  5 2        2018-11-16       2018-11-16                     2          3.32
-##  6 2        2018-11-16       2018-11-16                     2          1.49
-##  7 1        2018-11-16       2018-11-16                     1          1.4 
-##  8 1        2018-11-16       2018-11-16                     1          1.5 
-##  9 1        2018-11-16       2018-11-16                     1          0.9 
-## 10 1        2018-11-16       2018-11-16                     1          4.9 
+##  1 1        2018-04-15       2018-04-16                     1          9.7 
+##  2 2        2018-04-15       2018-04-15                     1          0.07
+##  3 2        2018-04-15       2018-04-16                     1         18.8 
+##  4 1        2018-04-15       2018-04-15                     1          1.1 
+##  5 1        2018-04-15       2018-04-15                     1          1.1 
+##  6 1        2018-04-15       2018-04-15                     1          1.3 
+##  7 1        2018-04-15       2018-04-15                     1          1.1 
+##  8 2        2018-04-15       2018-04-16                     2         20.3 
+##  9 1        2018-04-15       2018-04-15                     1          0.4 
+## 10 2        2018-04-15       2018-04-15                     1          2.93
 ## # … with more rows, and 12 more variables: ratecodeid &lt;chr&gt;,
 ## #   store_and_fwd_flag &lt;chr&gt;, pulocationid &lt;chr&gt;, dolocationid &lt;chr&gt;,
 ## #   payment_type &lt;chr&gt;, fare_amount &lt;dbl&gt;, extra &lt;dbl&gt;, mta_tax &lt;dbl&gt;,
@@ -187,16 +187,16 @@ nyc_yellow_2018 %&gt;%
 ## # Database: postgres [seabass@/var/run/postgresql:5432/nyc_yellow_taxi]
 ##    fare_amount
 ##          &lt;dbl&gt;
-##  1         8  
-##  2         5.5
-##  3         5.5
-##  4         9  
-##  5        13  
+##  1        28  
+##  2         2.5
+##  3        52  
+##  4         7.5
+##  5         6.5
 ##  6         7.5
-##  7         7.5
-##  8         8  
-##  9         6.5
-## 10        18.5
+##  7         6  
+##  8        52  
+##  9         3.5
+## 10        11  
 ## # … with more rows
 ```
 
@@ -428,16 +428,16 @@ nyc_yellow_2018 %&gt;%
 ## # Database: postgres [seabass@/var/run/postgresql:5432/nyc_yellow_taxi]
 ##    vendorid tpep_pickup_dat… tpep_dropoff_da… passenger_count trip_distance
 ##    &lt;chr&gt;    &lt;date&gt;           &lt;date&gt;                     &lt;int&gt;         &lt;dbl&gt;
-##  1 1        2018-11-16       2018-11-16                     2          1   
-##  2 1        2018-11-16       2018-11-16                     2          1.1 
-##  3 1        2018-11-16       2018-11-16                     1          0.9 
-##  4 2        2018-11-16       2018-11-16                     1          1.51
-##  5 2        2018-11-16       2018-11-16                     2          3.32
-##  6 2        2018-11-16       2018-11-16                     2          1.49
-##  7 1        2018-11-16       2018-11-16                     1          1.4 
-##  8 1        2018-11-16       2018-11-16                     1          1.5 
-##  9 1        2018-11-16       2018-11-16                     1          0.9 
-## 10 1        2018-11-16       2018-11-16                     1          4.9 
+##  1 1        2018-04-15       2018-04-16                     1          9.7 
+##  2 2        2018-04-15       2018-04-15                     1          0.07
+##  3 2        2018-04-15       2018-04-16                     1         18.8 
+##  4 1        2018-04-15       2018-04-15                     1          1.1 
+##  5 1        2018-04-15       2018-04-15                     1          1.1 
+##  6 1        2018-04-15       2018-04-15                     1          1.3 
+##  7 1        2018-04-15       2018-04-15                     1          1.1 
+##  8 2        2018-04-15       2018-04-16                     2         20.3 
+##  9 1        2018-04-15       2018-04-15                     1          0.4 
+## 10 2        2018-04-15       2018-04-15                     1          2.93
 ## # … with more rows, and 12 more variables: ratecodeid &lt;chr&gt;,
 ## #   store_and_fwd_flag &lt;chr&gt;, pulocationid &lt;chr&gt;, dolocationid &lt;chr&gt;,
 ## #   payment_type &lt;chr&gt;, fare_amount &lt;dbl&gt;, extra &lt;dbl&gt;, mta_tax &lt;dbl&gt;,
@@ -531,19 +531,22 @@ nyc_yellow_2018 %&gt;%
 ---
 # Using SQL if needed
 - There may be times when we need to bring out the SQL
-- For example, if we wanted to get the counts of null in passenger count, we could do the following
+- For example, if we wanted to get the number of times each payment type was used as we did previously, we could do the following
 
 
 ```r
-dbSendQuery(con,'SELECT count(*) FROM nyc_yellow_2018')
+dbGetQuery(con,'SELECT COUNT(*) FROM nyc_yellow_2018 GROUP BY payment_type')
 ```
 
 ```
-## &lt;PqResult&gt;
-##   SQL  SELECT count(*) FROM nyc_yellow_2018
-##   ROWS Fetched: 0 [incomplete]
-##        Changed: 0
+##      count
+## 1 77928307
+## 2 33556849
+## 3   582599
+## 4   166868
+## 5        3
 ```
+
 ---
 # Counting missing values in all columns in one go
 - I've delayed this enough, how can we get the missing info in one go?
@@ -601,9 +604,59 @@ nyc_yellow_2018 %&gt;%
 # More advanced modelling
 - We can use more advanced modelling using tidypredict, parsnip, and other packages from the tidymodels ecosystem. 
 
-- A good tutorial would be (here)[https://resources.rstudio.com/webinars/modeling-in-databases-with-r]
+- We'd first need to sample into memory though
 
-- I can cover more if time allows.
+
+```r
+library(tidymodels)
+yellow_sample &lt;- dbGetQuery(con,'SELECT "fare_amount", "vendorid", "tip_amount","trip_distance","tolls_amount" FROM nyc_yellow_2018 ORDER BY RANDOM() LIMIT 10000') %&gt;% 
+  as_tibble()
+
+lin_reg &lt;- linear_reg()
+rand_model &lt;- lin_reg %&gt;% 
+  set_engine("lm") %&gt;% 
+  fit(tip_amount ~ . ,data = yellow_sample)
+yellow_sample %&gt;% 
+  bind_cols(predict(rand_model,yellow_sample)) %&gt;% 
+  metrics(truth = tip_amount,estimate = .pred)
+```
+
+```
+## # A tibble: 3 x 3
+##   .metric .estimator .estimate
+##   &lt;chr&gt;   &lt;chr&gt;          &lt;dbl&gt;
+## 1 rmse    standard       1.85 
+## 2 rsq     standard       0.378
+## 3 mae     standard       1.30
+```
+
+--- 
+# Testing our model on the database
+- We can evaluate our model's predictions as follows
+
+```r
+nyc_yellow_2018 %&gt;% 
+  tidypredict::tidypredict_to_column(rand_model) %&gt;% 
+  select(tip_amount,fit)
+```
+
+```
+## # Source:   lazy query [?? x 2]
+## # Database: postgres [seabass@/var/run/postgresql:5432/nyc_yellow_taxi]
+##    tip_amount   fit
+##         &lt;dbl&gt; &lt;dbl&gt;
+##  1        7.3 3.57 
+##  2        0   0.593
+##  3       10   6.32 
+##  4        0   1.17 
+##  5        0   1.07 
+##  6        0   1.18 
+##  7        0   1.02 
+##  8       10.6 6.37 
+##  9        0   0.736
+## 10        0   1.56 
+## # … with more rows
+```
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>

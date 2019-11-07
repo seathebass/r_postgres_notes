@@ -216,8 +216,12 @@ nyc_yellow_2018 %>%
   summarise(missing_fare_amount = is.na(fare_amount)) %>% 
   count(missing_fare_amount)
 ```
-- From the above, we can see that there are no missing values in fare_amount (kind of)
+- From the above, we can see that there are no missing values in fare_amount 
 
+---
+# Solutions even further
+
+- finally!
 ```{r}
 nyc_yellow_2018 %>% 
   count(payment_type) %>% 
@@ -240,7 +244,8 @@ nyc_yellow_2018 %>%
 # Let's make some plots!
 - Thankfully, there is a way to build plots using DBplot!
 
-```{r visualization,cache=TRUE}
+.pull-left[
+```{r visualization,cache=TRUE,eval=FALSE}
 library(dbplot)
 nyc_yellow_2018 %>% 
   db_compute_bins(fare_amount) %>% 
@@ -251,8 +256,11 @@ nyc_yellow_2018 %>%
   labs(title = "fare amount for nyc yellow taxi 2018",
        x = "fare amount")
 ```
-
-- Almost all types of plots are available using dbplot. The end result will always be a ggplot object that you can modify using regular ggplot.
+]
+.pull-right[
+```{r visual-out,ref.label="visualization",echo = FALSE,fig.height=5}
+```
+]
 
 ---
 # Intermediate data wrangling
@@ -268,6 +276,11 @@ under_zero <- nyc_yellow_2018 %>%
 ```
 
 - from the above, we observe `r scales::comma(as.numeric(under_zero$count))` cases have a value underneath 0 for fare_amount
+
+---
+# Which were zeros?
+
+- the values less than 0 are presented as follows:
 
 ```{r which_zero}
 nyc_yellow_2018 %>% 
@@ -299,10 +312,6 @@ nyc_yellow_2018 %>%
 nyc_yellow_2018 %>% 
   summarise(passenger_count_mean = mean(passenger_count))
 ```
-
---
-
-- This approach is feasible for two columns but if there were more we might have a problem
 
 ---
 # Scoped dplyr verbs in postgres
@@ -366,8 +375,6 @@ nyc_yellow_2018 %>%
 # More advanced modelling
 - We can use more advanced modelling using tidypredict, parsnip, and other packages from the tidymodels ecosystem. 
 
-- We'd first need to sample into memory though
-
 ```{r,warning=F,message = F}
 library(tidymodels)
 yellow_sample <- dbGetQuery(con,'SELECT "fare_amount", "vendorid", "tip_amount","trip_distance","tolls_amount" FROM nyc_yellow_2018 ORDER BY RANDOM() LIMIT 10000') %>% 
@@ -382,8 +389,10 @@ yellow_sample %>%
   metrics(truth = tip_amount,estimate = .pred)
 ```
 
+---
 --- 
 # Testing our model on the database
+
 - We can evaluate our model's predictions as follows
 ```{r}
 nyc_yellow_2018 %>% 
